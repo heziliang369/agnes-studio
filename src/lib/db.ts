@@ -45,7 +45,18 @@ function openDB(): Promise<IDBDatabase> {
   });
 }
 
-export async function addRecord(record: Omit<GenerationRecord, "timestamp"> & { id?: string; timestamp?: number }): Promise<GenerationRecord> {
+export async function addRecord(record: {
+  type: "image" | "video";
+  prompt: string;
+  resultUrl: string;
+  thumbnailUrl?: string;
+  model?: string;
+  aspectRatio?: string;
+  duration?: string;
+  negativePrompt?: string;
+  id?: string;
+  timestamp?: number;
+}): Promise<GenerationRecord> {
   const dbConn = await openDB();
   const tx = dbConn.transaction(STORE_NAME, "readwrite");
   const store = tx.objectStore(STORE_NAME);
@@ -56,13 +67,11 @@ export async function addRecord(record: Omit<GenerationRecord, "timestamp"> & { 
     timestamp: record.timestamp || Date.now(),
   };
 
-  await new Promise<void>((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const request = store.put(fullRecord);
-    request.onsuccess = () => resolve();
+    request.onsuccess = () => resolve(fullRecord);
     request.onerror = () => reject(request.error);
   });
-
-  return fullRecord;
 }
 
 export async function getRecords(): Promise<GenerationRecord[]> {
@@ -74,7 +83,6 @@ export async function getRecords(): Promise<GenerationRecord[]> {
     const request = store.getAll();
     request.onsuccess = () => {
       const records = request.result as GenerationRecord[];
-      // Sort by timestamp descending (newest first)
       records.sort((a, b) => b.timestamp - a.timestamp);
       resolve(records);
     };
