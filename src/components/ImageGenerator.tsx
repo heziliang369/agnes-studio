@@ -13,7 +13,6 @@ export default function ImageGenerator() {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<GenerationRecord[]>([]);
 
-  // Load history on mount
   useEffect(() => {
     loadHistory();
   }, []);
@@ -80,7 +79,6 @@ export default function ImageGenerator() {
       if (data.images?.[0]?.url) {
         const imgUrl = data.images[0].url;
         setResult({ url: imgUrl, size: data.size });
-        // Save to history after a short delay to ensure URL is stable
         setTimeout(() => handleSaveToHistory(imgUrl, data.size), 500);
       } else {
         setError("未获取到图片 URL");
@@ -101,163 +99,176 @@ export default function ImageGenerator() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      {/* Generation Form */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-4">生成新图像</h3>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="w-full max-w-3xl mx-auto space-y-6">
+      {/* Generation Card */}
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-white/[0.06]">
+          <h3 className="text-base font-semibold text-gray-100">🎨 生成新图像</h3>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Prompt */}
           <div>
-            <label htmlFor="prompt" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="img-prompt" className="block text-sm font-medium text-gray-400 mb-2">
               提示词
             </label>
             <textarea
-              id="prompt"
+              id="img-prompt"
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="描述你想要生成的图像..."
-              rows={4}
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+              rows={3}
+              className="w-full px-4 py-3 bg-black/30 border border-white/[0.08] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 resize-none text-sm transition-all"
               disabled={loading}
             />
           </div>
 
+          {/* Model Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">模型</label>
-            <div className="flex gap-3">
+            <label className="block text-sm font-medium text-gray-400 mb-2">模型</label>
+            <div className="grid grid-cols-2 gap-2">
               {IMAGE_MODELS.map((m) => (
                 <button
                   key={m.id}
                   type="button"
                   onClick={() => setModel(m.id)}
-                  className={`flex-1 p-3 rounded-lg border text-left transition-all ${
-                    model === m.id
-                      ? "border-purple-500 bg-purple-500/10"
-                      : "border-gray-700 bg-gray-900 hover:border-gray-600"
-                  }`}
                   disabled={loading}
+                  className={`p-3 rounded-xl border text-left transition-all text-sm ${
+                    model === m.id
+                      ? "border-purple-500/50 bg-purple-500/10 shadow-sm shadow-purple-500/10"
+                      : "border-white/[0.08] bg-black/20 hover:border-white/[0.15]"
+                  } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                  <div className="text-sm font-medium text-white">{m.display}</div>
-                  <div className="text-xs text-gray-400 mt-1">{m.speed} · {m.strengths}</div>
+                  <div className="font-medium text-white text-sm">{m.display}</div>
+                  <div className="text-xs text-gray-500 mt-1">{m.speed} · {m.strengths}</div>
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Aspect Ratio */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">尺寸</label>
-            <div className="flex gap-3">
+            <label className="block text-sm font-medium text-gray-400 mb-2">尺寸</label>
+            <div className="grid grid-cols-3 gap-2">
               {ASPECT_RATIOS.map((ar) => (
                 <button
                   key={ar.value}
                   type="button"
                   onClick={() => setAspectRatio(ar.value)}
-                  className={`flex-1 p-3 rounded-lg border text-center transition-all ${
-                    aspectRatio === ar.value
-                      ? "border-purple-500 bg-purple-500/10"
-                      : "border-gray-700 bg-gray-900 hover:border-gray-600"
-                  }`}
                   disabled={loading}
+                  className={`p-3 rounded-xl border text-center transition-all text-sm ${
+                    aspectRatio === ar.value
+                      ? "border-purple-500/50 bg-purple-500/10"
+                      : "border-white/[0.08] bg-black/20 hover:border-white/[0.15]"
+                  } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                  <div className="text-sm text-white">{ar.label}</div>
+                  <div className="text-white">{ar.label}</div>
                 </button>
               ))}
             </div>
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading || !prompt.trim()}
-            className={`w-full py-3 px-6 rounded-lg font-medium transition-all ${
+            className={`w-full py-3 px-6 rounded-xl font-medium text-sm transition-all ${
               loading || !prompt.trim()
-                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/25"
+                ? "bg-white/[0.06] text-gray-600 cursor-not-allowed"
+                : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30"
             }`}
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
                 生成中...
               </span>
             ) : (
-              "生成图像"
+              "✨ 生成图像"
             )}
           </button>
         </form>
 
+        {/* Error */}
         {error && (
-          <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg">
-            <p className="text-red-400 text-sm">{error}</p>
+          <div className="mx-6 mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+            <p className="text-red-400 text-xs">{error}</p>
           </div>
         )}
       </div>
 
       {/* Latest Result */}
       {result && (
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-white">最新生成结果</h3>
-          <div className="relative rounded-lg overflow-hidden border border-gray-700 bg-gray-900">
-            <img
-              src={result.url}
-              alt="Generated image"
-              className="w-full h-auto"
-            />
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
+            <h3 className="text-base font-semibold text-gray-100">最新生成结果</h3>
+            <span className="text-xs text-gray-600">{result.size}</span>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => handleDownload(result.url, `agnes-image-${Date.now()}.png`)}
-              className="flex-1 py-2 px-4 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-white transition-colors"
-            >
-              下载图片
-            </button>
-            <button
-              onClick={() => {
-                setResult(null);
-                setError(null);
-              }}
-              className="flex-1 py-2 px-4 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-white transition-colors"
-            >
-              重新生成
-            </button>
+          <div className="p-4">
+            <div className="rounded-xl overflow-hidden border border-white/[0.06] bg-black/30">
+              <img
+                src={result.url}
+                alt="Generated image"
+                className="w-full h-auto"
+              />
+            </div>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => handleDownload(result.url, `agnes-image-${Date.now()}.png`)}
+                className="flex-1 py-2 px-4 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] rounded-xl text-xs text-gray-300 transition-colors"
+              >
+                下载图片
+              </button>
+              <button
+                onClick={() => {
+                  setResult(null);
+                  setError(null);
+                }}
+                className="flex-1 py-2 px-4 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] rounded-xl text-xs text-gray-300 transition-colors"
+              >
+                重新生成
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* History Gallery */}
       {history.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">生成记录 ({history.length})</h3>
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
+            <h3 className="text-base font-semibold text-gray-100">生成记录 ({history.length})</h3>
             <button
               onClick={loadHistory}
-              className="text-xs text-gray-400 hover:text-white transition-colors"
+              className="text-xs text-gray-600 hover:text-gray-300 transition-colors"
             >
               刷新
             </button>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {history.map((item) => (
-              <div key={item.id} className="group relative rounded-lg overflow-hidden border border-gray-700 bg-gray-900">
+              <div key={item.id} className="group relative rounded-xl overflow-hidden border border-white/[0.08] bg-black/30 aspect-square">
                 <img
                   src={item.resultUrl}
                   alt={item.prompt}
-                  className="w-full aspect-square object-cover"
+                  className="w-full h-full object-cover"
                 />
                 {/* Hover overlay */}
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
-                  <p className="text-xs text-white line-clamp-2 mb-1">{item.prompt}</p>
-                  <div className="flex gap-1">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2.5">
+                  <p className="text-[11px] text-white/90 line-clamp-2 mb-2 leading-relaxed">{item.prompt}</p>
+                  <div className="flex gap-1.5">
                     <button
                       onClick={() => handleDownload(item.resultUrl, `agnes-image-${item.id}.png`)}
-                      className="flex-1 py-1 px-2 bg-purple-600 hover:bg-purple-500 rounded text-xs text-white transition-colors"
+                      className="flex-1 py-1.5 px-2 bg-purple-600/80 hover:bg-purple-500 rounded-lg text-[11px] text-white transition-colors"
                     >
                       下载
                     </button>
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className="py-1 px-2 bg-red-600 hover:bg-red-500 rounded text-xs text-white transition-colors"
+                      className="py-1.5 px-2.5 bg-red-600/80 hover:bg-red-500 rounded-lg text-[11px] text-white transition-colors"
                     >
                       删除
                     </button>

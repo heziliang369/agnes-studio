@@ -92,7 +92,6 @@ export default function VideoGenerator() {
           stopPolling();
           setStatus("completed");
           setLoading(false);
-          // Extract video URL from the response data
           const videoUrl = data.data?.url || "";
           setResult(videoUrl);
           if (videoUrl) {
@@ -169,245 +168,261 @@ export default function VideoGenerator() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
-      {/* Mode Toggle */}
-      <div className="flex gap-2">
-        <button
-          onClick={() => setMode("text")}
-          className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-all ${
-            mode === "text"
-              ? "border-purple-500 bg-purple-500/10 text-white"
-              : "border-gray-700 bg-gray-900 text-gray-400 hover:text-white"
-          }`}
-          disabled={loading}
-        >
-          文生视频
-        </button>
-        <button
-          onClick={() => setMode("image")}
-          className={`flex-1 py-2 px-4 rounded-lg border text-sm font-medium transition-all ${
-            mode === "image"
-              ? "border-purple-500 bg-purple-500/10 text-white"
-              : "border-gray-700 bg-gray-900 text-gray-400 hover:text-white"
-          }`}
-          disabled={loading}
-        >
-          图生视频
-        </button>
-      </div>
+    <div className="w-full max-w-3xl mx-auto space-y-6">
+      {/* Generation Card */}
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-white/[0.06]">
+          <h3 className="text-base font-semibold text-gray-100">🎬 生成新视频</h3>
+        </div>
 
-      {/* Generation Form */}
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-4">生成新视频</h3>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label htmlFor="video-prompt" className="block text-sm font-medium text-gray-300 mb-2">
-              提示词
-            </label>
-            <textarea
-              id="video-prompt"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="描述你想要的视频内容..."
-              rows={4}
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+        <div className="p-6 space-y-5">
+          {/* Mode Toggle */}
+          <div className="flex gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/[0.06] w-fit">
+            <button
+              onClick={() => setMode("text")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                mode === "text"
+                  ? "bg-purple-500/15 text-purple-300"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
               disabled={loading}
-            />
+            >
+              文生视频
+            </button>
+            <button
+              onClick={() => setMode("image")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                mode === "image"
+                  ? "bg-purple-500/15 text-purple-300"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+              disabled={loading}
+            >
+              图生视频
+            </button>
           </div>
 
-          {mode === "image" && (
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Prompt */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">参考图片</label>
-              <label className="block cursor-pointer">
-                <div className="border-2 border-dashed border-gray-700 hover:border-purple-500 rounded-lg p-8 text-center transition-colors">
-                  {filePreview ? (
-                    <div className="relative">
-                      <img
-                        src={filePreview}
-                        alt="Reference"
-                        className="max-h-48 mx-auto rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setFile(null);
-                          setFilePreview("");
-                        }}
-                        className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="text-gray-500">
-                      <p>点击或拖拽上传图片</p>
-                      <p className="text-xs mt-1">支持 JPG、PNG 格式</p>
-                    </div>
-                  )}
-                </div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  disabled={loading}
-                />
+              <label htmlFor="video-prompt" className="block text-sm font-medium text-gray-400 mb-2">
+                提示词
               </label>
+              <textarea
+                id="video-prompt"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="描述你想要的视频内容..."
+                rows={3}
+                className="w-full px-4 py-3 bg-black/30 border border-white/[0.08] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 resize-none text-sm transition-all"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Reference Image (img2video) */}
+            {mode === "image" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">参考图片</label>
+                <label className="block cursor-pointer">
+                  <div className="border-2 border-dashed border-white/[0.08] hover:border-purple-500/40 rounded-xl p-6 text-center transition-colors bg-black/20">
+                    {filePreview ? (
+                      <div className="relative inline-block">
+                        <img
+                          src={filePreview}
+                          alt="Reference"
+                          className="max-h-40 rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setFile(null);
+                            setFilePreview("");
+                          }}
+                          className="absolute -top-2 -right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] hover:bg-red-500"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-gray-600">
+                        <p className="text-sm">点击或拖拽上传图片</p>
+                        <p className="text-xs mt-1 text-gray-700">支持 JPG、PNG 格式</p>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    disabled={loading}
+                  />
+                </label>
+              </div>
+            )}
+
+            {/* Negative Prompt */}
+            <div>
+              <label htmlFor="neg-prompt" className="block text-sm font-medium text-gray-400 mb-2">
+                反向提示词 <span className="text-gray-600">（可选）</span>
+              </label>
+              <input
+                id="neg-prompt"
+                type="text"
+                value={negativePrompt}
+                onChange={(e) => setNegativePrompt(e.target.value)}
+                placeholder="不想要的内容..."
+                className="w-full px-4 py-3 bg-black/30 border border-white/[0.08] rounded-xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 text-sm transition-all"
+                disabled={loading}
+              />
+            </div>
+
+            {/* Duration */}
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">视频时长</label>
+              <div className="grid grid-cols-3 gap-2">
+                {VIDEO_DURATIONS.map((d) => (
+                  <button
+                    key={d.frames}
+                    type="button"
+                    onClick={() => setDuration(d.frames)}
+                    disabled={loading}
+                    className={`p-3 rounded-xl border text-center transition-all text-sm ${
+                      duration === d.frames
+                        ? "border-purple-500/50 bg-purple-500/10"
+                        : "border-white/[0.08] bg-black/20 hover:border-white/[0.15]"
+                    } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    <div className="text-white">{d.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Resolution */}
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-2">分辨率</label>
+              <div className="grid grid-cols-2 gap-2">
+                {VIDEO_RESOLUTIONS.map((r) => (
+                  <button
+                    key={`${r.width}x${r.height}`}
+                    type="button"
+                    onClick={() => setResolution(r)}
+                    disabled={loading}
+                    className={`p-3 rounded-xl border text-center transition-all text-sm ${
+                      resolution.width === r.width
+                        ? "border-purple-500/50 bg-purple-500/10"
+                        : "border-white/[0.08] bg-black/20 hover:border-white/[0.15]"
+                    } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    <div className="text-white">{r.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={loading || !prompt.trim()}
+              className={`w-full py-3 px-6 rounded-xl font-medium text-sm transition-all ${
+                loading || !prompt.trim()
+                  ? "bg-white/[0.06] text-gray-600 cursor-not-allowed"
+                  : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30"
+              }`}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  {status === "creating" ? "创建任务中..." : "生成视频中..."}
+                </span>
+              ) : (
+                "✨ 生成视频"
+              )}
+            </button>
+          </form>
+
+          {/* Progress Bar */}
+          {(status === "generating" || status === "creating") && (
+            <div className="space-y-2">
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>{status === "creating" ? "创建任务中..." : "生成视频中..."}</span>
+                <span>{Math.round(progress)}%</span>
+              </div>
+              <div className="w-full bg-black/30 rounded-full h-1.5 overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-purple-500 to-indigo-500 h-full rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <p className="text-[11px] text-gray-700">视频生成通常需要 30-120 秒，请耐心等待...</p>
             </div>
           )}
 
-          <div>
-            <label htmlFor="neg-prompt" className="block text-sm font-medium text-gray-300 mb-2">
-              反向提示词（可选）
-            </label>
-            <input
-              id="neg-prompt"
-              type="text"
-              value={negativePrompt}
-              onChange={(e) => setNegativePrompt(e.target.value)}
-              placeholder="不想要的内容..."
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              disabled={loading}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">视频时长</label>
-            <div className="flex gap-3">
-              {VIDEO_DURATIONS.map((d) => (
-                <button
-                  key={d.frames}
-                  type="button"
-                  onClick={() => setDuration(d.frames)}
-                  className={`flex-1 p-3 rounded-lg border text-center transition-all ${
-                    duration === d.frames
-                      ? "border-purple-500 bg-purple-500/10"
-                      : "border-gray-700 bg-gray-900 hover:border-gray-600"
-                  }`}
-                  disabled={loading}
-                >
-                  <div className="text-sm text-white">{d.label}</div>
-                </button>
-              ))}
+          {/* Error */}
+          {error && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+              <p className="text-red-400 text-xs">{error}</p>
             </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">分辨率</label>
-            <div className="flex gap-3">
-              {VIDEO_RESOLUTIONS.map((r) => (
-                <button
-                  key={`${r.width}x${r.height}`}
-                  type="button"
-                  onClick={() => setResolution(r)}
-                  className={`flex-1 p-3 rounded-lg border text-center transition-all ${
-                    resolution.width === r.width
-                      ? "border-purple-500 bg-purple-500/10"
-                      : "border-gray-700 bg-gray-900 hover:border-gray-600"
-                  }`}
-                  disabled={loading}
-                >
-                  <div className="text-sm text-white">{r.label}</div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || !prompt.trim()}
-            className={`w-full py-3 px-6 rounded-lg font-medium transition-all ${
-              loading || !prompt.trim()
-                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/25"
-            }`}
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                创建任务中...
-              </span>
-            ) : (
-              "生成视频"
-            )}
-          </button>
-        </form>
-
-        {/* Progress */}
-        {(status === "generating" || status === "creating") && (
-          <div className="mt-4">
-            <div className="flex justify-between text-sm text-gray-400 mb-2">
-              <span>{status === "creating" ? "创建任务中..." : "生成视频中..."}</span>
-              <span>{Math.round(progress)}%</span>
-            </div>
-            <div className="w-full bg-gray-800 rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-purple-500 to-indigo-500 h-2 rounded-full transition-all duration-500"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-600 mt-2">视频生成通常需要 30-120 秒，请耐心等待...</p>
-          </div>
-        )}
-
-        {error && (
-          <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg">
-            <p className="text-red-400 text-sm">{error}</p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Latest Result */}
       {status === "completed" && result && (
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-white">最新生成结果</h3>
-          <div className="rounded-lg overflow-hidden border border-gray-700 bg-gray-900">
-            <video src={result} controls className="w-full" />
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
+            <h3 className="text-base font-semibold text-gray-100">最新生成结果</h3>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => handleDownload(result, `agnes-video-${Date.now()}.mp4`)}
-              className="flex-1 py-2 px-4 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-white transition-colors"
-            >
-              下载视频
-            </button>
-            <button
-              onClick={() => {
-                setStatus("idle");
-                setError(null);
-                setResult("");
-                setProgress(0);
-                setPrompt("");
-                setNegativePrompt("");
-                setDuration(121);
-              }}
-              className="flex-1 py-2 px-4 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm text-white transition-colors"
-            >
-              重新生成
-            </button>
+          <div className="p-4">
+            <div className="rounded-xl overflow-hidden border border-white/[0.06] bg-black/30">
+              <video src={result} controls className="w-full" />
+            </div>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => handleDownload(result, `agnes-video-${Date.now()}.mp4`)}
+                className="flex-1 py-2 px-4 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] rounded-xl text-xs text-gray-300 transition-colors"
+              >
+                下载视频
+              </button>
+              <button
+                onClick={() => {
+                  setStatus("idle");
+                  setError(null);
+                  setResult("");
+                  setProgress(0);
+                  setPrompt("");
+                  setNegativePrompt("");
+                  setDuration(121);
+                }}
+                className="flex-1 py-2 px-4 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] rounded-xl text-xs text-gray-300 transition-colors"
+              >
+                重新生成
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* History Gallery */}
       {history.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">视频记录 ({history.length})</h3>
+        <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
+            <h3 className="text-base font-semibold text-gray-100">视频记录 ({history.length})</h3>
             <button
               onClick={loadHistory}
-              className="text-xs text-gray-400 hover:text-white transition-colors"
+              className="text-xs text-gray-600 hover:text-gray-300 transition-colors"
             >
               刷新
             </button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {history.map((item) => (
-              <div key={item.id} className="group relative rounded-lg overflow-hidden border border-gray-700 bg-gray-900">
+              <div key={item.id} className="group relative rounded-xl overflow-hidden border border-white/[0.08] bg-black/30">
                 <video
                   src={item.resultUrl}
                   className="w-full aspect-video object-cover"
@@ -416,18 +431,18 @@ export default function VideoGenerator() {
                   onMouseOver={(e) => e.currentTarget.play()}
                   onMouseOut={(e) => e.currentTarget.pause()}
                 />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
-                  <p className="text-xs text-white line-clamp-2 mb-2">{item.prompt}</p>
-                  <div className="flex gap-1">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+                  <p className="text-[11px] text-white/90 line-clamp-2 mb-2 leading-relaxed">{item.prompt}</p>
+                  <div className="flex gap-1.5">
                     <button
                       onClick={() => handleDownload(item.resultUrl, `agnes-video-${item.id}.mp4`)}
-                      className="flex-1 py-1 px-2 bg-purple-600 hover:bg-purple-500 rounded text-xs text-white transition-colors"
+                      className="flex-1 py-1.5 px-2 bg-purple-600/80 hover:bg-purple-500 rounded-lg text-[11px] text-white transition-colors"
                     >
                       下载
                     </button>
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className="py-1 px-2 bg-red-600 hover:bg-red-500 rounded text-xs text-white transition-colors"
+                      className="py-1.5 px-2.5 bg-red-600/80 hover:bg-red-500 rounded-lg text-[11px] text-white transition-colors"
                     >
                       删除
                     </button>
