@@ -73,7 +73,8 @@ export async function callAgnesVideoApi(
   height: number,
   numFrames: number,
   frameRate: number,
-  negativePrompt?: string
+  negativePrompt?: string,
+  imageData?: { image?: string; extraBody?: { image?: string[]; mode?: string } }
 ): Promise<ApiResponse<{ id: string; video_id: string }>> {
   if (!AGNES_API_KEY) {
     return { success: false, error: "API Key not configured" };
@@ -88,6 +89,12 @@ export async function callAgnesVideoApi(
     frame_rate: frameRate,
   };
   if (negativePrompt) body.negative_prompt = negativePrompt;
+  if (imageData) {
+    if (imageData.image) body.image = imageData.image;
+    if (imageData.extraBody) {
+      body.extra_body = imageData.extraBody;
+    }
+  }
 
   const jsonBody = JSON.stringify(body);
   const options: https.RequestOptions = {

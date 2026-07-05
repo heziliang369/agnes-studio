@@ -6,12 +6,13 @@ import { addRecord, getRecordsByType, deleteRecord, GenerationRecord } from "@/l
 
 export default function VideoGenerator() {
   const [mode, setMode] = useState<"text" | "image">("text");
+  const [subMode, setSubMode] = useState<"single" | "multi" | "keyframes">("single");
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [duration, setDuration] = useState(121);
   const [resolution, setResolution] = useState({ width: 1152, height: 768 });
-  const [file, setFile] = useState<File | null>(null);
-  const [filePreview, setFilePreview] = useState<string>("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [filePreviews, setFilePreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<number>(0);
   const [status, setStatus] = useState<"idle" | "creating" | "generating" | "completed" | "failed">("idle");
@@ -59,12 +60,19 @@ export default function VideoGenerator() {
     setHistory((prev) => prev.filter((r) => r.id !== id));
   }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) {
-      setFile(selected);
-      setFilePreview(URL.createObjectURL(selected));
+  const handleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files || []);
+    if (selected.length > 0) {
+      const newFiles = [...files, ...selected];
+      setFiles(newFiles.slice(0, 10)); // Limit to 10 images
+      const newPreviews = selected.map(f => URL.createObjectURL(f));
+      setFilePreviews(prev => [...prev, ...newPreviews]);
     }
+  };
+
+  const removeImage = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFilePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const startPolling = async (vid: string) => {
@@ -122,6 +130,10 @@ export default function VideoGenerator() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!prompt.trim()) return;
+    if (mode === "image" && files.length === 0) {
+      setError("请至少上传一张参考图片");
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -130,6 +142,15 @@ export default function VideoGenerator() {
     setStatus("creating");
 
     try {
+      // Convert files to base64 data URLs for the API
+      const imageUrls = await Promise.all(files.map(file => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (event) => resolve(event.target?.result as string);
+          reader.readAsDataURL(file);
+        });
+      }));
+
       const res = await fetch("/api/videos/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -140,6 +161,11 @@ export default function VideoGenerator() {
           numFrames: duration,
           frameRate: 24,
           negativePrompt: negativePrompt.trim() || undefined,
+          image: mode === "image" && files.length === 1 ? imageUrls[0] : undefined,
+          extraBody: mode === "image" && files.length > 1 ? {
+            image: imageUrls,
+            mode: subMode === "keyframes" ? "keyframes" : undefined,
+          } : undefined,
         }),
       });
 
@@ -176,7 +202,7 @@ export default function VideoGenerator() {
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Mode Toggle */}
+          {/* Main Mode Toggle */}
           <div className="flex gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/[0.06] w-fit">
             <button
               onClick={() => setMode("text")}
@@ -202,6 +228,45 @@ export default function VideoGenerator() {
             </button>
           </div>
 
+          {/* Sub-mode Toggle (for image mode) */}
+          {mode === "image" && (
+            <div className="flex gap-1 p-1 bg-white/[0.03] rounded-xl border border-white/[0.06] w-fit">
+              <button
+                onClick={() => setSubMode("single")}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                  subMode === "single"
+                    ? "bg-purple-500/15 text-purple-300"
+                    : "text-gray-500 hover:text-gray-300"
+                }`}
+                disabled={loading}
+              >
+                单图
+              </button>
+              <button
+                onClick={() => setSubMode("multi")}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                  subMode === "multi"
+                    ? "bg-purple-500/15 text-purple-300"
+                    : "text-gray-500 hover:text-gray-300"
+                }`}
+                disabled={loading}
+              >
+                多图
+              </button>
+              <button
+                onClick={() => setSubMode("keyframes")}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium transition-all ${
+                  subMode === "keyframes"
+                    ? "bg-purple-500/15 text-purple-300"
+                    : "text-gray-500 hover:text-gray-300"
+                }`}
+                disabled={loading}
+              >
+                关键帧
+              </button>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Prompt */}
             <div>
@@ -219,46 +284,63 @@ export default function VideoGenerator() {
               />
             </div>
 
-            {/* Reference Image (img2video) */}
+            {/* Reference Images (img2video) */}
             {mode === "image" && (
               <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">参考图片</label>
-                <label className="block cursor-pointer">
-                  <div className="border-2 border-dashed border-white/[0.08] hover:border-purple-500/40 rounded-xl p-6 text-center transition-colors bg-black/20">
-                    {filePreview ? (
-                      <div className="relative inline-block">
+                <label className="block text-sm font-medium text-gray-400 mb-2">
+                  参考图片 {subMode === "single" ? "(1张)" : `(最多10张)`}
+                </label>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {filePreviews.map((preview, index) => (
+                      <div key={index} className="relative group">
                         <img
-                          src={filePreview}
-                          alt="Reference"
-                          className="max-h-40 rounded-lg"
+                          src={preview}
+                          alt={`Reference ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-lg border border-white/[0.08]"
                         />
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setFile(null);
-                            setFilePreview("");
-                          }}
-                          className="absolute -top-2 -right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] hover:bg-red-500"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] hover:bg-red-500 transition-colors"
                         >
                           ✕
                         </button>
                       </div>
-                    ) : (
-                      <div className="text-gray-600">
-                        <p className="text-sm">点击或拖拽上传图片</p>
-                        <p className="text-xs mt-1 text-gray-700">支持 JPG、PNG 格式</p>
-                      </div>
+                    ))}
+                    {filePreviews.length < 10 && (
+                      <label className="block cursor-pointer">
+                        <div className="border-2 border-dashed border-white/[0.08] hover:border-purple-500/40 rounded-lg h-24 flex items-center justify-center transition-colors bg-black/20">
+                          <span className="text-gray-600 text-xs">+ 添加图片</span>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple={subMode !== "single"}
+                          onChange={handleFilesChange}
+                          className="hidden"
+                          disabled={loading}
+                        />
+                      </label>
                     )}
                   </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                    disabled={loading}
-                  />
-                </label>
+                  {files.length === 0 && (
+                    <label className="block cursor-pointer">
+                      <div className="border-2 border-dashed border-white/[0.08] hover:border-purple-500/40 rounded-xl p-6 text-center transition-colors bg-black/20">
+                        <p className="text-gray-600 text-sm">点击或拖拽上传图片</p>
+                        <p className="text-xs mt-1 text-gray-700">支持 JPG、PNG 格式</p>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple={subMode !== "single"}
+                        onChange={handleFilesChange}
+                        className="hidden"
+                        disabled={loading}
+                      />
+                    </label>
+                  )}
+                </div>
               </div>
             )}
 
@@ -398,6 +480,8 @@ export default function VideoGenerator() {
                   setPrompt("");
                   setNegativePrompt("");
                   setDuration(121);
+                  setFiles([]);
+                  setFilePreviews([]);
                 }}
                 className="flex-1 py-2 px-4 bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] rounded-xl text-xs text-gray-300 transition-colors"
               >

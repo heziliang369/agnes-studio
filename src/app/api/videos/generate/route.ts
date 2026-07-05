@@ -4,7 +4,7 @@ import { callAgnesVideoApi, pollVideoStatus } from "@/lib/agnes-api";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { prompt, width, height, numFrames, frameRate, negativePrompt } = body;
+    const { prompt, width, height, numFrames, frameRate, negativePrompt, image, extraBody } = body;
 
     if (!prompt?.trim()) {
       return NextResponse.json({ success: false, error: "Prompt is required" }, { status: 400 });
@@ -16,7 +16,8 @@ export async function POST(request: Request) {
       height || 768,
       numFrames || 121,
       frameRate || 24,
-      negativePrompt
+      negativePrompt,
+      { image, extraBody }
     );
 
     if (!result.success || !result.data) {
