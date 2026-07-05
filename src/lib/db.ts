@@ -7,7 +7,7 @@ const DB_NAME = "AgnesStudioDB";
 const DB_VERSION = 1;
 const STORE_NAME = "generations";
 
-interface GenerationRecord {
+export interface GenerationRecord {
   id: string;
   type: "image" | "video";
   prompt: string;
